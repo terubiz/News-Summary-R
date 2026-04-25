@@ -1,0 +1,13 @@
+# IDE
+.idea/
+.vscode/
+
+# Claude Code (個人設定・会話履歴)
+.claude/settings.local.json
+.claude/projects/
+
+# macOS
+.DS_Store
+
+# ログ
+*.log
