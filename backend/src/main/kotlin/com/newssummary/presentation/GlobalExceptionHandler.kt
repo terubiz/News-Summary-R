@@ -2,6 +2,9 @@ package com.newssummary.presentation
 
 import com.newssummary.application.auth.EmailAlreadyExistsException
 import com.newssummary.application.auth.UnauthorizedException
+import com.newssummary.application.keyword.DuplicateKeywordException
+import com.newssummary.application.keyword.ForbiddenResourceException
+import com.newssummary.application.keyword.KeywordNotFoundException
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -42,6 +45,24 @@ class GlobalExceptionHandler {
     fun handleEmailAlreadyExists(ex: EmailAlreadyExistsException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.CONFLICT).body(
             ErrorResponse(status = 409, error = "Conflict", message = ex.message ?: "Email already exists")
+        )
+
+    @ExceptionHandler(DuplicateKeywordException::class)
+    fun handleDuplicateKeyword(ex: DuplicateKeywordException): ResponseEntity<ErrorResponse> =
+        ResponseEntity.status(HttpStatus.CONFLICT).body(
+            ErrorResponse(status = 409, error = "Conflict", message = ex.message ?: "Duplicate keyword")
+        )
+
+    @ExceptionHandler(KeywordNotFoundException::class)
+    fun handleKeywordNotFound(ex: KeywordNotFoundException): ResponseEntity<ErrorResponse> =
+        ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            ErrorResponse(status = 404, error = "Not Found", message = ex.message ?: "Keyword not found")
+        )
+
+    @ExceptionHandler(ForbiddenResourceException::class)
+    fun handleForbidden(ex: ForbiddenResourceException): ResponseEntity<ErrorResponse> =
+        ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+            ErrorResponse(status = 403, error = "Forbidden", message = ex.message ?: "Access denied")
         )
 
     @ExceptionHandler(EntityNotFoundException::class)
