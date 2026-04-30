@@ -49,39 +49,38 @@
 
 ---
 
-- [x] 4. インフラ/AI層の実装（GeminiVertexAIAdapter・AIProviderRouter）
-- [x] 4.1 build.gradle.ktsにVertex AI SDK依存を追加する
-  - `backend/build.gradle.kts` の `dependencies` ブロックに `implementation("com.google.cloud:google-cloud-vertexai")` を追加する
-  - バージョンはBOMまたは明示的なバージョン指定（`google-cloud-bom`推奨）を使用する
-  - `./gradlew dependencies` でVertex AI SDKが依存ツリーに現れること
+- [x] 4. インフラ/AI層の実装（GeminiApiAdapter・AIProviderRouter）
+- [x] 4.1 build.gradle.ktsに外部AI SDK依存が不要なことを確認する
+  - Gemini REST API は Spring `RestClient` で直接呼び出すため、外部AI SDKの追加は不要
+  - `./gradlew dependencies` で不要な依存が追加されていないことを確認すること
   - _Requirements: 2.4_
   - _Boundary: build.gradle.kts_
 
-- [x] 4.2 application.ymlにGCP・Gemini設定を追加する (P)
-  - `backend/src/main/resources/application.yml` に `gcp.project-id`・`gcp.location`（デフォルト: `us-central1`）・`ai.gemini.model-name`（デフォルト: `gemini-1.5-pro`）の設定を追加する
-  - `gcp.project-id` が未設定の場合にSpringBoot起動時にエラーが発生するよう `@Value("\${gcp.project-id}")` でバリデーションされることを設計上確認する
+- [x] 4.2 application.ymlにGemini API設定を追加する (P)
+  - `backend/src/main/resources/application.yml` に `gemini.api-key`（`${GEMINI_API_KEY:}`）・`gemini.api-url`（デフォルト: `https://generativelanguage.googleapis.com/v1beta`）・`gemini.model-name`（デフォルト: `gemini-1.5-pro`）の設定を追加する
+  - `GEMINI_API_KEY` が未設定の場合はAPIコール時に認証エラーが発生する（起動時エラーにはしない）
   - application.ymlに3項目の設定エントリが存在すること
   - _Requirements: 2.5, 6.3, 6.4_
   - _Boundary: application.yml_
 
-- [x] 4.3 GeminiVertexAIAdapterを実装する
-  - `backend/src/main/kotlin/com/newssummary/infrastructure/ai/GeminiVertexAIAdapter.kt` を新規作成する
-  - `@Value` で `gcp.project-id`・`gcp.location`・`ai.gemini.model-name` を注入する
-  - `VertexAI(projectId, location)` でクライアント初期化し、`GenerativeModel` にGoogle Search Grounding `Tool` を設定する
-  - キーワードリストと`SummaryConfig.lookbackDays`を組み込んだプロンプトを構築して`generateContent`を呼び出す
-  - レスポンスから`candidates[0].content.parts[0].text`を抽出し`AIProviderResult`を返す
-  - レスポンスが空または`candidates`が存在しない場合は`AIProviderException("Empty response from Gemini")`をスローする
-  - ネットワーク・APIエラーは`AIProviderException`にラップしてスローする
-  - エラー発生時にERRORレベルでログを出力する（要件6.2）
+- [x] 4.3 GeminiApiAdapterを実装する
+  - `backend/src/main/kotlin/com/newssummary/infrastructure/ai/GeminiApiAdapter.kt` を新規作成する
+  - `@Value` で `gemini.api-key`・`gemini.api-url`・`gemini.model-name` を注入する
+  - Spring `RestClient` を使用して `$apiUrl/models/$modelName:generateContent?key=$apiKey` に POST する
+  - リクエストボディに `tools: [{"googleSearch": {}}]` を含めて Google Search Grounding を有効化する
+  - レスポンスから `candidates[0].content.parts[0].text` を抽出し `AIProviderResult` を返す
+  - レスポンスが空または `candidates` が存在しない場合は `AIProviderException("Empty response from Gemini")` をスローする
+  - ネットワーク・APIエラーは `AIProviderException` にラップしてスローする
+  - エラー発生時に ERROR レベルでログを出力する（要件6.2）
   - `./gradlew compileKotlin` が通ること
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 6.2_
   - _Boundary: infrastructure/ai_
-  - _Depends: 1.3, 4.1, 4.2_
+  - _Depends: 1.3, 4.2_
 
 - [x] 4.4 AIProviderRouterを実装する
   - `backend/src/main/kotlin/com/newssummary/infrastructure/ai/AIProviderRouter.kt` を新規作成する
-  - `AIProviderPort`インターフェースを実装し、`config.aiProviderName` の `when` 式で `"gemini"` → `GeminiVertexAIAdapter`、それ以外 → `UnsupportedAIProviderException` をスローする
-  - `@Component` アノテーションを付与し、Springが`AIProviderPort`型として`GenerateSummaryUseCase`にDIできることを確認する
+  - `AIProviderPort`インターフェースを実装し、`config.aiProviderName` の `when` 式で `"gemini"` → `GeminiApiAdapter`、それ以外 → `UnsupportedAIProviderException` をスローする
+  - `@Component` アノテーションを付与し、SpringがAIProviderPort型として`GenerateSummaryUseCase`にDIできることを確認する
   - `./gradlew compileKotlin` が通ること
   - _Requirements: 1.2, 1.3, 1.4_
   - _Boundary: infrastructure/ai_
@@ -158,7 +157,7 @@
   - `POST /api/auth/login` でJWTトークンを取得できること
   - `GET /api/summaries`（JWT付き）が200・空配列を返すこと
   - `POST /api/summaries/generate`（JWT付き、アクティブキーワードなし）が422を返すこと
-  - キーワードを登録後に `POST /api/summaries/generate` を呼び出し、`summaries` テーブルにレコードが保存されること（GCP認証情報が設定されている環境でのみ確認）
+  - キーワードを登録後に `POST /api/summaries/generate` を呼び出し、`summaries` テーブルにレコードが保存されること（`GEMINI_API_KEY` が設定されている環境でのみ確認）
   - `GET /api/summaries` が保存された要約を返すこと
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 4.3, 5.1, 5.5_
   - _Depends: 6.1, 6.2, 7.1_

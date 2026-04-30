@@ -2,13 +2,13 @@
 
 ## はじめに
 
-本スペックは、ニュース要約配信アプリケーション（News-Summary-R）の**AIニュース要約エンジン**を実装する。認証済みユーザーが登録したキーワードリストを受け取り、Google Vertex AI（Gemini）のGoogle Search Grounding機能を活用してリアルタイムにニュースを調査・要約し、その結果を`Summary`エンティティとして永続化する機能を提供する。
+本スペックは、ニュース要約配信アプリケーション（News-Summary-R）の**AIニュース要約エンジン**を実装する。認証済みユーザーが登録したキーワードリストを受け取り、Gemini REST API の Google Search Grounding 機能を活用してリアルタイムにニュースを調査・要約し、その結果を `Summary` エンティティとして永続化する機能を提供する。
 
 本スペックは `keyword-settings` スペックが提供する `Keyword`・`SummaryConfig` エンティティを上流依存とし、`scheduler`（`GenerateSummaryUseCase`を呼び出す）および `notification-delivery`（`Summary`集約を読み取る）を下流とする。
 
 ## 境界コンテキスト（オプション）
 
-- **スコープ内**: `AIProviderPort`出力ポートインターフェース定義、`GeminiVertexAIAdapter`実装（Vertex AI SDK + Google Search Grounding）、`GenerateSummaryUseCase`（キーワード受取→AI呼出→SummaryResult返却）、`Summary`エンティティ（id, userId, content, keywords, generatedAt）の永続化、AIプロバイダー名によるアダプタールーティング
+- **スコープ内**: `AIProviderPort`出力ポートインターフェース定義、`GeminiApiAdapter`実装（Gemini REST API + Google Search Grounding）、`GenerateSummaryUseCase`（キーワード受取→AI呼出→SummaryResult返却）、`Summary`エンティティ（id, userId, content, keywords, generatedAt）の永続化、AIプロバイダー名によるアダプタールーティング
 - **スコープ外**: スケジューリング（`scheduler`スペックが担当）、通知配信（`notification-delivery`スペックが担当）、プロバイダー管理画面（`keyword-settings`スペックの設定フォームが担当）、ニュースソースの直接取得（AIのGrounding検索に委ねる）
 - **隣接する期待**: `scheduler`スペックは`GenerateSummaryUseCase`を呼び出すことができる。`notification-delivery`スペックは`SummaryRepository`から`Summary`を読み取ることができる。
 
@@ -22,23 +22,23 @@
 
 1. The ai-summary-engine shall define an `AIProviderPort` output port interface in the domain layer that accepts a list of keywords and summary configuration, and returns a summary result text.
 2. When `GenerateSummaryUseCase` calls `AIProviderPort`, the ai-summary-engine shall route to the appropriate adapter based on `SummaryConfig.aiProviderName`.
-3. If `SummaryConfig.aiProviderName` is `"gemini"`, the ai-summary-engine shall delegate to `GeminiVertexAIAdapter`.
+3. If `SummaryConfig.aiProviderName` is `"gemini"`, the ai-summary-engine shall delegate to `GeminiApiAdapter`.
 4. If `SummaryConfig.aiProviderName` refers to an unknown provider name, the ai-summary-engine shall throw an `UnsupportedAIProviderException` and not generate a summary.
 5. The ai-summary-engine shall keep `AIProviderPort` in the domain layer, with all concrete adapters in the infrastructure layer, to maintain dependency inversion.
 
 ---
 
-### 要件 2: Gemini Vertex AI アダプター（GeminiVertexAIAdapter）
+### 要件 2: Gemini API アダプター（GeminiApiAdapter）
 
-**目的**: 開発者として、Google Vertex AI SDK（com.google.cloud:google-cloud-vertexai）を使ってGeminiモデルを呼び出し、Google Search Groundingを有効化したニュース要約を生成したい。リアルタイムのニュース情報をAIが調査・要約できるようにするため。
+**目的**: 開発者として、Gemini REST API を直接呼び出してGeminiモデルを利用し、Google Search Grounding を有効化したニュース要約を生成したい。リアルタイムのニュース情報をAIが調査・要約できるようにするため。
 
 #### 受け入れ基準
 
-1. When `GeminiVertexAIAdapter.generateSummary` is called with a keyword list, the ai-summary-engine shall construct a prompt that instructs Gemini to research and summarize recent news related to each keyword.
-2. When calling the Gemini API, the ai-summary-engine shall enable Google Search Grounding on the request to allow the model to retrieve real-time news information.
+1. When `GeminiApiAdapter.generateSummary` is called with a keyword list, the ai-summary-engine shall construct a prompt that instructs Gemini to research and summarize recent news related to each keyword.
+2. When calling the Gemini API, the ai-summary-engine shall enable Google Search Grounding on the request by including `tools: [{"googleSearch": {}}]` in the request body to allow the model to retrieve real-time news information.
 3. When the Gemini API call succeeds, the ai-summary-engine shall extract the generated text from the response and return it as `AIProviderResult`.
-4. The ai-summary-engine shall use the `com.google.cloud:google-cloud-vertexai` SDK (not the early-access SDK) for all Vertex AI API calls.
-5. The ai-summary-engine shall read GCP project ID and location (region) from application configuration (e.g., `application.yml`) using Application Default Credentials (ADC) for authentication.
+4. The ai-summary-engine shall call the Gemini REST API endpoint (`https://generativelanguage.googleapis.com/v1beta/models/{modelName}:generateContent?key={apiKey}`) using Spring `RestClient` without any external AI SDK.
+5. The ai-summary-engine shall read the API key from `gemini.api-key` (`GEMINI_API_KEY` 環境変数), the API URL from `gemini.api-url`, and the model name from `gemini.model-name` in `application.yml`.
 6. If the Gemini API call fails due to a network error or API error, the ai-summary-engine shall throw an `AIProviderException` with the original error details.
 7. If the Gemini API response contains no generated text content, the ai-summary-engine shall throw an `AIProviderException` indicating an empty response.
 
@@ -97,6 +97,6 @@
 #### 受け入れ基準
 
 1. The ai-summary-engine shall add `UnsupportedAIProviderException` (→ HTTP 400), `NoActiveKeywordsException` (→ HTTP 422), and `AIProviderException` (→ HTTP 502) to `GlobalExceptionHandler`.
-2. When an `AIProviderException` occurs, the ai-summary-engine shall log the full error details (provider name, error message, stack trace) at ERROR level before propagating the exception.
-3. The ai-summary-engine shall read GCP configuration (`gcp.project-id`, `gcp.location`) from `application.yml` and fail on startup if these required values are not set.
-4. The ai-summary-engine shall read the Gemini model name from `application.yml` (e.g., `ai.gemini.model-name`, defaulting to `"gemini-1.5-pro"`) to allow model version configuration without code changes.
+2. When an `AIProviderException` occurs, the ai-summary-engine shall log the full error details (error message, stack trace) at ERROR level before propagating the exception.
+3. The ai-summary-engine shall read the Gemini API key from `gemini.api-key` in `application.yml` (populated via `GEMINI_API_KEY` 環境変数). If the API key is empty, the adapter will fail at call time.
+4. The ai-summary-engine shall read the Gemini model name from `gemini.model-name` in `application.yml` (defaulting to `"gemini-1.5-pro"`) to allow model version configuration without code changes.
