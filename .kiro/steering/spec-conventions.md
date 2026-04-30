@@ -1,5 +1,17 @@
 # スペック開発規約
 
+## テストコードの命名規約
+
+テストメソッド名は英語で記述し、`@DisplayName` アノテーションに日本語で説明を記載する。
+
+```kotlin
+@Test
+@DisplayName("login: 正しい資格情報で LoginResponse を返す")
+fun loginReturnsLoginResponseWithValidCredentials() { ... }
+```
+
+**理由**: メソッド名を英語にすることでIDE補完・grep・グローバルな可読性を確保しつつ、`@DisplayName` の日本語でテストレポートと仕様書としての可読性を両立する。
+
 ## インターフェース定義の一元管理
 
 ### ルール

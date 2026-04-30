@@ -11,3 +11,15 @@
 
 # ログ
 *.log
+
+# 環境変数（シークレット・環境依存）
+.env
+frontend/.env
+
+# Gradle
+backend/build/
+backend/.gradle/
+
+# React / Vite
+frontend/node_modules/
+frontend/dist/
