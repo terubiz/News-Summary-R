@@ -220,8 +220,8 @@
   - _Boundary: SummaryDetailPage_
   - _Depends: 7.1_
 
-- [ ] 8.3 SettingsPage を実装する (P)
-  - `frontend/src/pages/SettingsPage.tsx` を新規作成
+- [ ] 8.3 SettingsPage に通知設定セクションを追加する (P)
+  - `frontend/src/pages/SettingsPage.tsx`（`keyword-settings` スペックが作成済み）に「通知設定」セクションを追加する（新規ファイル作成ではない）
   - `useEffect` で `fetchNotificationSettings()` を呼び出し、トグルの初期値を設定する
   - トグル変更時に `updateNotificationSettings(enabled)` を呼び出す
   - API 呼び出し中はトグルを `disabled` にして二重送信を防ぐ

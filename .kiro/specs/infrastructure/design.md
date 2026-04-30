@@ -393,6 +393,7 @@ class User(
 ```kotlin
 interface UserRepository {
     fun save(user: User): User
+    fun findById(id: Long): User?                  // notification-delivery が使用
     fun findByEmail(email: String): User?
     fun existsByEmail(email: String): Boolean
 }

@@ -56,7 +56,7 @@
   - _Depends: 2.1, 2.2_
 
 - [ ] 4.2 UserRepository インターフェース定義
-  - `domain/user/UserRepository.kt` に `save(user: User): User`、`findByEmail(email: String): User?`、`existsByEmail(email: String): Boolean` メソッドを持つインターフェースを定義する
+  - `domain/user/UserRepository.kt` に `save(user: User): User`、`findById(id: Long): User?`、`findByEmail(email: String): User?`、`existsByEmail(email: String): Boolean` メソッドを持つインターフェースを定義する
   - インターフェースはドメイン層に配置し、インフラ実装への依存を持たない
   - `UserRepository` インターフェースが定義され、`AuthService` から参照可能になる
   - _Requirements: 7.1, 7.3_

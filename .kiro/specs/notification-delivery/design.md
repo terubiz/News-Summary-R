@@ -41,7 +41,7 @@
 - `UserNotificationSetting` ドメインエンティティ（userId, emailNotificationEnabled）と `UserNotificationSettingRepository` インターフェース
 - `DeliveryController` REST API エンドポイント（要約履歴一覧・詳細）
 - `NotificationSettingController` REST API エンドポイント（通知設定 GET/PUT）
-- React 画面: `DashboardPage`（要約履歴一覧）・`SummaryDetailPage`（詳細）・`SettingsPage`（通知設定）
+- React 画面: `DashboardPage`（要約履歴一覧）・`SummaryDetailPage`（詳細）・`SettingsPage`（通知設定セクションを追加。`keyword-settings` スペックが作成したページに統合）
 - `GlobalExceptionHandler` への `SummaryNotFoundException`（404）追加
 - `ExecuteScheduledSummaryUseCase` への `DeliverSummaryUseCase` 呼び出し追加（scheduler スペックへの変更）
 
@@ -246,7 +246,7 @@ frontend/src/
 ├── pages/
 │   ├── DashboardPage.tsx                       # 要約履歴一覧ページ（既存スタブを実装）
 │   ├── SummaryDetailPage.tsx                   # 要約詳細ページ（新規）
-│   └── SettingsPage.tsx                        # 通知設定ページ（新規）
+│   └── SettingsPage.tsx                        # 通知設定セクションを追加（keyword-settings スペックが作成済み）
 ├── api/
 │   ├── deliveryApi.ts                          # /api/delivery/* クライアント関数
 │   └── notificationSettingApi.ts               # /api/notification/* クライアント関数
@@ -363,7 +363,7 @@ sequenceDiagram
 | NotificationSettingController | プレゼンテーション | 通知設定 REST API | 5.2–5.5 | NotificationSettingService |
 | DashboardPage | フロントエンド | 要約履歴一覧画面 | 6.1–6.7 | deliveryApi |
 | SummaryDetailPage | フロントエンド | 要約詳細画面 | 6.3, 6.4 | deliveryApi |
-| SettingsPage | フロントエンド | 通知設定画面 | 7.1–7.5 | notificationSettingApi |
+| SettingsPage | フロントエンド | 既存設定画面に通知設定セクション追加 | 7.1–7.5 | notificationSettingApi |
 
 ---
 
@@ -684,14 +684,15 @@ data class NotificationSettingResponse(
 - URL パラメーター `id` を使用して `GET /api/delivery/summaries/{id}` を呼び出し
 - 403/404 エラー時はエラーメッセージを表示
 
-#### SettingsPage（通知設定）
+#### SettingsPage（通知設定セクション追加）
 
 | フィールド | 詳細 |
 |---|---|
-| 意図 | Email 通知 ON/OFF トグルスイッチを提供し、設定の取得・保存を行う |
+| 意図 | `keyword-settings` スペックが作成した `SettingsPage.tsx`（`/settings`）に Email 通知 ON/OFF トグルセクションを追加する |
 | 要件 | 7.1–7.5 |
 
 **実装ノート**
+- `keyword-settings` スペックの `SettingsPage.tsx` に「通知設定」セクションを追加する（新規ファイル作成ではない）
 - `useEffect` で `GET /api/notification/settings` を呼び出し、トグル初期値を設定
 - トグル変更時に `PUT /api/notification/settings` を即座に呼び出し
 - API 呼び出し中はトグルを `disabled` に設定

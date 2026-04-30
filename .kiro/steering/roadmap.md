@@ -33,8 +33,8 @@ Webダッシュボードでの閲覧とEmailでの受信を基本とし、将来
 
 ## スペック（依存順）
 
-- [ ] infrastructure — Dockerセットアップ・DB基盤・Spring Boot/Reactスキャフォールド・JWT認証・ユーザー管理。依存: なし
-- [ ] keyword-settings — キーワードCRUD・スケジュール設定管理・管理画面UI。依存: infrastructure
-- [ ] ai-summary-engine — Gemini Vertex AI統合・AIプロバイダー抽象化・ニュース要約生成エンジン。依存: keyword-settings
-- [ ] scheduler — スケジューラー実装・ユーザーごとの自動実行・ジョブ履歴管理。依存: ai-summary-engine
-- [ ] notification-delivery — Email配信・Webダッシュボード表示・配信チャネル抽象化（将来拡張対応）。依存: scheduler
+- [x] infrastructure — Dockerセットアップ・DB基盤・Spring Boot/Reactスキャフォールド・JWT認証・ユーザー管理。依存: なし
+- [x] keyword-settings — キーワードCRUD・スケジュール設定管理・管理画面UI。依存: infrastructure
+- [x] ai-summary-engine — Gemini Vertex AI統合・AIプロバイダー抽象化・ニュース要約生成エンジン。依存: keyword-settings
+- [x] scheduler — スケジューラー実装・ユーザーごとの自動実行・ジョブ履歴管理。依存: ai-summary-engine
+- [x] notification-delivery — Email配信・Webダッシュボード表示・配信チャネル抽象化（将来拡張対応）。依存: scheduler

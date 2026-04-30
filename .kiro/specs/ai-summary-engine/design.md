@@ -350,6 +350,7 @@ class Summary(
 ```kotlin
 interface SummaryRepository {
     fun save(summary: Summary): Summary
+    fun findById(id: Long): Summary?                                        // notification-delivery が使用
     fun findAllByUserIdOrderByGeneratedAtDesc(userId: Long): List<Summary>
 }
 ```
