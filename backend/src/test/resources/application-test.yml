@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: ${TEST_DATASOURCE_URL:jdbc:tc:postgresql:15:///newssummary}
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  data:
+    redis:
+      host: ${TEST_REDIS_HOST:localhost}
+      port: ${TEST_REDIS_PORT:6379}
+
+jwt:
+  secret: test-secret-key-for-testing-only-32chars
+  expiration-ms: 3600000
