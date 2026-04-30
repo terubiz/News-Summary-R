@@ -4,8 +4,10 @@ import com.newssummary.application.summary.UnsupportedAIProviderException
 import com.newssummary.domain.summary.AIProviderPort
 import com.newssummary.domain.summary.AIProviderResult
 import com.newssummary.domain.summaryconfig.SummaryConfig
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Component
 
+@Primary
 @Component
 class AIProviderRouter(
     private val geminiAdapter: GeminiApiAdapter

@@ -24,7 +24,7 @@ jwt:
 gemini:
   api-key: ${GEMINI_API_KEY:}
   api-url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com/v1beta}
-  model-name: ${GEMINI_MODEL_NAME:gemini-1.5-pro}
+  model-name: ${GEMINI_MODEL_NAME:gemini-2.5-flash}
 
 management:
   endpoints:
