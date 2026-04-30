@@ -2,6 +2,9 @@ package com.newssummary.presentation
 
 import com.newssummary.application.auth.EmailAlreadyExistsException
 import com.newssummary.application.auth.UnauthorizedException
+import com.newssummary.application.summary.AIProviderException
+import com.newssummary.application.summary.NoActiveKeywordsException
+import com.newssummary.application.summary.UnsupportedAIProviderException
 import com.newssummary.application.keyword.DuplicateKeywordException
 import com.newssummary.application.keyword.ForbiddenResourceException
 import com.newssummary.application.keyword.KeywordNotFoundException
@@ -63,6 +66,26 @@ class GlobalExceptionHandler {
     fun handleForbidden(ex: ForbiddenResourceException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.FORBIDDEN).body(
             ErrorResponse(status = 403, error = "Forbidden", message = ex.message ?: "Access denied")
+        )
+
+    @ExceptionHandler(AIProviderException::class)
+    fun handleAIProvider(ex: AIProviderException): ResponseEntity<ErrorResponse> {
+        log.error("AI provider error", ex)
+        return ResponseEntity.status(502).body(
+            ErrorResponse(status = 502, error = "Bad Gateway", message = ex.message ?: "AI provider error")
+        )
+    }
+
+    @ExceptionHandler(UnsupportedAIProviderException::class)
+    fun handleUnsupportedAIProvider(ex: UnsupportedAIProviderException): ResponseEntity<ErrorResponse> =
+        ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            ErrorResponse(status = 400, error = "Bad Request", message = ex.message ?: "Unsupported AI provider")
+        )
+
+    @ExceptionHandler(NoActiveKeywordsException::class)
+    fun handleNoActiveKeywords(ex: NoActiveKeywordsException): ResponseEntity<ErrorResponse> =
+        ResponseEntity.status(422).body(
+            ErrorResponse(status = 422, error = "Unprocessable Entity", message = ex.message ?: "No active keywords")
         )
 
     @ExceptionHandler(EntityNotFoundException::class)

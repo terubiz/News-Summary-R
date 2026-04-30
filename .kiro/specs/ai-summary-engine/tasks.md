@@ -2,8 +2,8 @@
 
 ## タスク一覧
 
-- [ ] 1. ドメイン層の実装（Summary集約・AIProviderPort）
-- [ ] 1.1 Summaryエンティティを作成する (P)
+- [x] 1. ドメイン層の実装（Summary集約・AIProviderPort）
+- [x] 1.1 Summaryエンティティを作成する (P)
   - `backend/src/main/kotlin/com/newssummary/domain/summary/Summary.kt` を新規作成する
   - `@Entity @Table(name = "summaries")` アノテーションを付与し、`id: Long`・`userId: Long`・`content: String`（`@Column(columnDefinition = "TEXT")`）・`keywords: String`・`generatedAt: Instant` フィールドを定義する
   - kotlin-jpaプラグインによりno-argコンストラクタが自動生成されることを確認する
@@ -11,13 +11,13 @@
   - _Requirements: 4.1_
   - _Boundary: domain/summary_
 
-- [ ] 1.2 SummaryRepositoryインターフェースを作成する (P)
+- [x] 1.2 SummaryRepositoryインターフェースを作成する (P)
   - `backend/src/main/kotlin/com/newssummary/domain/summary/SummaryRepository.kt` を新規作成する
   - `save(summary: Summary): Summary` と `findAllByUserIdOrderByGeneratedAtDesc(userId: Long): List<Summary>` メソッドを定義する
   - _Requirements: 4.2, 4.5_
   - _Boundary: domain/summary_
 
-- [ ] 1.3 AIProviderPortインターフェースを作成する (P)
+- [x] 1.3 AIProviderPortインターフェースを作成する (P)
   - `backend/src/main/kotlin/com/newssummary/domain/summary/AIProviderPort.kt` を新規作成する
   - `generateSummary(keywords: List<String>, config: SummaryConfig): AIProviderResult` メソッドを定義する
   - `data class AIProviderResult(val summaryText: String)` を同ファイルまたは同パッケージに定義する
@@ -26,8 +26,8 @@
 
 ---
 
-- [ ] 2. カスタム例外クラスの実装
-- [ ] 2.1 ai-summary-engine固有の例外クラスを作成する (P)
+- [x] 2. カスタム例外クラスの実装
+- [x] 2.1 ai-summary-engine固有の例外クラスを作成する (P)
   - `backend/src/main/kotlin/com/newssummary/application/summary/` 配下または共通の`exception/`パッケージに `AIProviderException`・`UnsupportedAIProviderException`・`NoActiveKeywordsException` クラスを作成する
   - 各例外は`RuntimeException`を継承し、適切なコンストラクタメッセージを持つ
   - `./gradlew compileKotlin` が通ること
@@ -36,8 +36,8 @@
 
 ---
 
-- [ ] 3. インフラ/永続化層の実装（SummaryJpaRepository）
-- [ ] 3.1 SummaryJpaRepositoryを実装する
+- [x] 3. インフラ/永続化層の実装（SummaryJpaRepository）
+- [x] 3.1 SummaryJpaRepositoryを実装する
   - `backend/src/main/kotlin/com/newssummary/infrastructure/persistence/SummaryJpaRepository.kt` を新規作成する
   - 内部に`SpringDataSummaryJpaRepository`（`JpaRepository<Summary, Long>`を継承するSpring Dataインターフェース）を委譲パターンで保持する
   - `SummaryRepository`（ドメイン）インターフェースを実装し、`save`・`findAllByUserIdOrderByGeneratedAtDesc` を委譲する
@@ -49,22 +49,22 @@
 
 ---
 
-- [ ] 4. インフラ/AI層の実装（GeminiVertexAIAdapter・AIProviderRouter）
-- [ ] 4.1 build.gradle.ktsにVertex AI SDK依存を追加する
+- [x] 4. インフラ/AI層の実装（GeminiVertexAIAdapter・AIProviderRouter）
+- [x] 4.1 build.gradle.ktsにVertex AI SDK依存を追加する
   - `backend/build.gradle.kts` の `dependencies` ブロックに `implementation("com.google.cloud:google-cloud-vertexai")` を追加する
   - バージョンはBOMまたは明示的なバージョン指定（`google-cloud-bom`推奨）を使用する
   - `./gradlew dependencies` でVertex AI SDKが依存ツリーに現れること
   - _Requirements: 2.4_
   - _Boundary: build.gradle.kts_
 
-- [ ] 4.2 application.ymlにGCP・Gemini設定を追加する (P)
+- [x] 4.2 application.ymlにGCP・Gemini設定を追加する (P)
   - `backend/src/main/resources/application.yml` に `gcp.project-id`・`gcp.location`（デフォルト: `us-central1`）・`ai.gemini.model-name`（デフォルト: `gemini-1.5-pro`）の設定を追加する
   - `gcp.project-id` が未設定の場合にSpringBoot起動時にエラーが発生するよう `@Value("\${gcp.project-id}")` でバリデーションされることを設計上確認する
   - application.ymlに3項目の設定エントリが存在すること
   - _Requirements: 2.5, 6.3, 6.4_
   - _Boundary: application.yml_
 
-- [ ] 4.3 GeminiVertexAIAdapterを実装する
+- [x] 4.3 GeminiVertexAIAdapterを実装する
   - `backend/src/main/kotlin/com/newssummary/infrastructure/ai/GeminiVertexAIAdapter.kt` を新規作成する
   - `@Value` で `gcp.project-id`・`gcp.location`・`ai.gemini.model-name` を注入する
   - `VertexAI(projectId, location)` でクライアント初期化し、`GenerativeModel` にGoogle Search Grounding `Tool` を設定する
@@ -78,7 +78,7 @@
   - _Boundary: infrastructure/ai_
   - _Depends: 1.3, 4.1, 4.2_
 
-- [ ] 4.4 AIProviderRouterを実装する
+- [x] 4.4 AIProviderRouterを実装する
   - `backend/src/main/kotlin/com/newssummary/infrastructure/ai/AIProviderRouter.kt` を新規作成する
   - `AIProviderPort`インターフェースを実装し、`config.aiProviderName` の `when` 式で `"gemini"` → `GeminiVertexAIAdapter`、それ以外 → `UnsupportedAIProviderException` をスローする
   - `@Component` アノテーションを付与し、Springが`AIProviderPort`型として`GenerateSummaryUseCase`にDIできることを確認する
@@ -89,8 +89,8 @@
 
 ---
 
-- [ ] 5. アプリケーション層の実装（GenerateSummaryUseCase・SummaryService）
-- [ ] 5.1 GenerateSummaryUseCaseを実装する
+- [x] 5. アプリケーション層の実装（GenerateSummaryUseCase・SummaryService）
+- [x] 5.1 GenerateSummaryUseCaseを実装する
   - `backend/src/main/kotlin/com/newssummary/application/summary/GenerateSummaryUseCase.kt` を新規作成する
   - `@Service` アノテーションを付与し、`KeywordRepository`・`SummaryConfigRepository`・`AIProviderPort`（DIされるのはAIProviderRouter）・`SummaryRepository` をコンストラクタ注入する
   - `execute(userId: Long): SummaryResult` を実装する:
@@ -106,7 +106,7 @@
   - _Boundary: application/summary_
   - _Depends: 1.1, 1.2, 1.3, 2.1, 3.1, 4.4_
 
-- [ ] 5.2 SummaryServiceを実装する (P)
+- [x] 5.2 SummaryServiceを実装する (P)
   - `backend/src/main/kotlin/com/newssummary/application/summary/SummaryService.kt` を新規作成する
   - `@Service` アノテーションを付与し、`SummaryRepository` をコンストラクタ注入する
   - `getSummaries(userId: Long): List<SummaryResponse>` を実装し、`summaryRepository.findAllByUserIdOrderByGeneratedAtDesc(userId)` を呼び出して`SummaryResponse`リストに変換して返す
@@ -118,8 +118,8 @@
 
 ---
 
-- [ ] 6. プレゼンテーション層の実装（SummaryController・GlobalExceptionHandler修正）
-- [ ] 6.1 SummaryControllerを実装する
+- [x] 6. プレゼンテーション層の実装（SummaryController・GlobalExceptionHandler修正）
+- [x] 6.1 SummaryControllerを実装する
   - `backend/src/main/kotlin/com/newssummary/presentation/SummaryController.kt` を新規作成する
   - `@RestController @RequestMapping("/api/summaries")` を付与し、`GenerateSummaryUseCase`・`SummaryService` をコンストラクタ注入する
   - `GET /api/summaries` → `SummaryService.getSummaries(userId)` を呼び出し`List<SummaryResponse>`を200で返す
@@ -130,7 +130,7 @@
   - _Boundary: presentation_
   - _Depends: 5.1, 5.2_
 
-- [ ] 6.2 GlobalExceptionHandlerに例外ハンドラを追加する (P)
+- [x] 6.2 GlobalExceptionHandlerに例外ハンドラを追加する (P)
   - `backend/src/main/kotlin/com/newssummary/presentation/GlobalExceptionHandler.kt` を修正する
   - `AIProviderException` → HTTP 502・`UnsupportedAIProviderException` → HTTP 400・`NoActiveKeywordsException` → HTTP 422 のハンドラメソッドをそれぞれ追加する
   - 既存の`ErrorResponse`形式（`timestamp`, `status`, `error`, `message`）で返す
@@ -141,8 +141,8 @@
 
 ---
 
-- [ ] 7. SecurityConfig修正（/api/summaries エンドポイント保護）
-- [ ] 7.1 SecurityConfigに/api/summariesエンドポイントの認証設定を追加する
+- [x] 7. SecurityConfig修正（/api/summaries エンドポイント保護）
+- [x] 7.1 SecurityConfigに/api/summariesエンドポイントの認証設定を追加する
   - `backend/src/main/kotlin/com/newssummary/infrastructure/security/SecurityConfig.kt` を修正する
   - `/api/summaries`・`/api/summaries/generate` が `permitAll` に含まれていないことを確認する（デフォルトで認証必須になっていることを確認する）
   - `./gradlew compileKotlin` が通ること
@@ -152,8 +152,8 @@
 
 ---
 
-- [ ] 8. 統合確認（docker compose up での動作確認）
-- [ ] 8.1 docker compose upで全サービスが起動し、エンドポイントが疎通することを確認する
+- [x] 8. 統合確認（docker compose up での動作確認）
+- [x] 8.1 docker compose upで全サービスが起動し、エンドポイントが疎通することを確認する
   - `docker compose up` で Spring Boot・PostgreSQL・Redis が正常起動すること
   - `POST /api/auth/login` でJWTトークンを取得できること
   - `GET /api/summaries`（JWT付き）が200・空配列を返すこと

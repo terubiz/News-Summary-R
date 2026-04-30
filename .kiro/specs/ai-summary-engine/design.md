@@ -169,11 +169,11 @@ graph TB
 
 | レイヤー | 選択 / バージョン | 役割 | 備考 |
 |---------|------------------|------|------|
-| AIプロバイダー | com.google.cloud:google-cloud-vertexai | Gemini API呼び出し・Google Search Grounding | 早期アクセスSDK不可 |
+| AIプロバイダー | Gemini REST API（generativelanguage.googleapis.com） | Gemini API呼び出し・Google Search Grounding | Spring RestClient で直呼び出し、APIキー認証 |
 | バックエンド | Kotlin + Spring Boot 3.x | REST API・ユースケース・アダプター | Spring Security 6.x (infra継承) |
 | ORM | Spring Data JPA / Hibernate | Summary永続化 | blocking JPA のみ（R2DBC禁止）|
 | データストア | PostgreSQL 15 | Summary保存 | ddl-auto=update |
-| コンテナ | Docker Compose v2 | 開発環境 | GCP ADC はホストマシンの認証情報をマウント |
+| コンテナ | Docker Compose v2 | 開発環境 | GEMINI_API_KEY を環境変数で注入 |
 
 ---
 
@@ -473,27 +473,21 @@ data class SummaryResponse(
 ```kotlin
 @Component
 class GeminiVertexAIAdapter(
-    @Value("\${gcp.project-id}") private val projectId: String,
-    @Value("\${gcp.location}") private val location: String,
-    @Value("\${ai.gemini.model-name:gemini-1.5-pro}") private val modelName: String
+    @Value("\${gemini.api-key}") private val apiKey: String,
+    @Value("\${gemini.api-url:https://generativelanguage.googleapis.com/v1beta}") private val apiUrl: String,
+    @Value("\${gemini.model-name:gemini-1.5-pro}") private val modelName: String
 ) : AIProviderPort {
     override fun generateSummary(keywords: List<String>, config: SummaryConfig): AIProviderResult
 }
 ```
 
 **実装ノート**
-- `VertexAI` クライアントは`VertexAI(projectId, location)`で初期化。ADCは自動的に使用される
-- `GenerativeModel(modelName, vertexAI)` でモデルを取得
-- Google Search Groundingは`Tool.newBuilder().setGoogleSearchRetrieval(GoogleSearchRetrieval.newBuilder().build()).build()`で有効化し、`GenerativeModel`に設定する
-- プロンプト構築例:
-  ```
-  以下のキーワードに関する最新ニュースを調査し、各キーワードについて要約してください。
-  キーワード: {keyword1}, {keyword2}, ...
-  過去{lookbackDays}日分のニュースを対象にしてください。
-  ```
-- レスポンスから`response.candidates[0].content.parts[0].text`でテキストを抽出
+- Spring `RestClient` を使用して `$apiUrl/models/$modelName:generateContent?key=$apiKey` に POST
+- Google Search Grounding は `tools: [{"googleSearch": {}}]` をリクエストボディに含めることで有効化
+- レスポンスから `candidates[0].content.parts[0].text` でテキストを抽出
 - candidatesが空またはtextが空の場合は`AIProviderException("Empty response from Gemini")`をスロー
 - ネットワークエラー・APIエラーは`catch`して`AIProviderException`にラップしてスロー
+- 将来のプロバイダー追加は`AIProviderPort`実装クラスを追加し`AIProviderRouter`の`when`節を拡張するだけでよい
 
 #### AIProviderRouter
 

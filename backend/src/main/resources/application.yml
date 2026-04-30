@@ -21,6 +21,11 @@ jwt:
   secret: ${JWT_SECRET:change-me-in-production-at-least-32-chars}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  api-url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com/v1beta}
+  model-name: ${GEMINI_MODEL_NAME:gemini-1.5-pro}
+
 management:
   endpoints:
     web:
